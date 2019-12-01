@@ -7,6 +7,7 @@ from PIL import Image
 import json
 from glob import glob
 import io
+from pymongo import MongoClient
 
 # import thread module
 from _thread import *
@@ -66,14 +67,18 @@ def face_recog(paths):
 
 
 class ImageData:
-    img_name = ""
-    img_bytestream = 0
-    img_numbox = 0
-    box_bytestream = 0
-    box_posx = 0
-    box_posy = 0
-    box_w = 0
-    box_h = 0
+    img_bytestream = 0 # original image bye stream
+    aligned_face_bytestream = 0 # aligned faces bytestream array in order from big faces to small faces
+    box_posx = 0 # x-coordinate array of extracting faces from original image
+    box_posy = 0 # y- coordinate array of extracting faces from original image
+    box_w = 0 # width array of extracting faces from original image
+    box_h = 0 # height array of extracting faces from original image
+
+
+# For MongoDB
+client = MongoClient('localhost', 27017)
+db = client['machine-learning']
+collection = db['ml-collection']
 
 
 # thread fuction
@@ -90,14 +95,13 @@ def threaded(c):
 
     # All received information
     data_receive = pickle.loads(arr)
-    img_name = data_receive.img_name
     img_bytestream = data_receive.img_bytestream
-    img_numbox = data_receive.img_numbox
-    box_bytestream = pickle.loads(data_receive.box_bytestream)
+    box_bytestream = pickle.loads(data_receive.aligned_face_bytestream)
     box_posx = pickle.loads(data_receive.box_posx)
     box_posy = pickle.loads(data_receive.box_posy)
     box_w = pickle.loads(data_receive.box_w)
     box_h = pickle.loads(data_receive.box_h)
+    img_numbox = len(box_bytestream)
 
     # Step 2: Preprocessing bounding box image
     # Step 3: Get name and other information of bounding box image based on trained model
@@ -105,9 +109,8 @@ def threaded(c):
 
     # Step 4: Generate a JSON form and send to Group 3 via HTTP
     image_dict = dict()
-    image_dict["filename"] = img_name
-    # image_dict["image_bytestream"] = img_bytestream
-    image_dict["numberofbox"] = img_numbox
+    image_dict["_id"] = collection.count()
+    image_dict["image_bytestream"] = img_bytestream
     annotation_list = []
     for i in range(img_numbox):
         box_dict = dict()
@@ -120,8 +123,9 @@ def threaded(c):
         box_dict["bbox"] = bbox
         annotation_list.append(box_dict)
     image_dict["annotation"] = annotation_list
-    image_json = json.dumps(image_dict, indent=4)
-    print(image_json)
+    collection.insert_one(image_dict)
+    # image_json = json.dumps(image_dict, indent=4)
+    # print(image_json)
     c.close()
 
 
