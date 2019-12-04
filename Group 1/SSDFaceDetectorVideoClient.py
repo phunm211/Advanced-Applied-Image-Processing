@@ -19,13 +19,12 @@ import pickle
 
 
 class ImageData:
-    img_name = "" # please define
-    img_bytestream = [] # original image bye stream 
-    aligned_face_bytestream = [] # aligned faces bytestream array in order from big faces to small faces
-    box_posx = [] # x-coordinate array of extracting faces from original image 
-    box_posy = [] # y- coordinate array of extracting faces from original image 
-    box_w = [] # width array of extracting faces from original image
-    box_h = [] # height array of extracting faces from original image
+    img_bytestream = 0 # original image bye stream 
+    aligned_face_bytestream = 0 # aligned faces bytestream array in order from big faces to small faces
+    box_posx = 0 # x-coordinate array of extracting faces from original image 
+    box_posy = 0 # y- coordinate array of extracting faces from original image 
+    box_w = 0 # width array of extracting faces from original image
+    box_h = 0 # height array of extracting faces from original image
 
 
 def read_video():
@@ -84,10 +83,10 @@ def detect_faces(image, detections, faceAlignment, confidence):
             aligned_faces.append(convert_img_to_bytestream(faceAligned))
 
             # drawing bounding box
-            text = "{:.2f}%".format(guarantee * 100)
-            y = startY - 10 if startY - 10 > 10 else startY + 10
-            cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
-            cv2.putText(image, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
+            # text = "{:.2f}%".format(guarantee * 100)
+            # y = startY - 10 if startY - 10 > 10 else startY + 10
+            # cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
+            # cv2.putText(image, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
 
     # Sort lists by face height
     box_posx = sortByOrder(box_posx, box_h)

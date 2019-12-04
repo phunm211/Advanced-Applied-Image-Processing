@@ -17,13 +17,12 @@ import time
 import argparse
 
 class ImageData:
-    img_name = "" # please define
-    img_bytestream = [] # original image bye stream 
-    aligned_face_bytestream = [] # aligned faces bytestream array in order from big faces to small faces
-    box_posx = [] # x-coordinate array of extracting faces from original image 
-    box_posy = [] # y- coordinate array of extracting faces from original image 
-    box_w = [] # width array of extracting faces from original image
-    box_h = [] # height array of extracting faces from original image
+    img_bytestream = 0 # original image bye stream 
+    aligned_face_bytestream = 0 # aligned faces bytestream array in order from big faces to small faces
+    box_posx = 0 # x-coordinate array of extracting faces from original image 
+    box_posy = 0 # y- coordinate array of extracting faces from original image 
+    box_w = 0 # width array of extracting faces from original image
+    box_h = 0 # height array of extracting faces from original image
 
 
 def convert_img_to_bytestream(img):
@@ -54,10 +53,10 @@ def detect_faces(image, detections, faceAlignment, confidence):
             box = np.abs(detections[0, 0, i, 3:7] * np.array([w, h, w, h]))
             (startX, startY, endX, endY) = box.astype("int")
 
-            box_posx.append(startX)
-            box_posy.append(startY)
-            box_w.append(endX - startX)
-            box_h.append(endY - startY)
+            box_posx.append(int(startX))
+            box_posy.append(int(startY))
+            box_w.append(int(endX - startX))
+            box_h.append(int(endY - startY))
 
             faceROI = image[startY : endY, startX : endX]
             (fH, fW) = faceROI.shape[:2]
@@ -72,10 +71,10 @@ def detect_faces(image, detections, faceAlignment, confidence):
             aligned_faces.append(convert_img_to_bytestream(faceAligned))
 
             # drawing bounding box
-            text = "{:.2f}%".format(guarantee * 100)
-            y = startY - 10 if startY - 10 > 10 else startY + 10
-            cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
-            cv2.putText(image, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
+            # text = "{:.2f}%".format(guarantee * 100)
+            # y = startY - 10 if startY - 10 > 10 else startY + 10
+            # cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
+            # cv2.putText(image, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
 
     # Sort lists by face height
     box_posx = sortByOrder(box_posx, box_h)
@@ -104,7 +103,7 @@ def main():
 
     # connect to server on local computer
     # local host IP '127.0.0.1'
-    host = '127.0.0.1'
+    host = '223.195.37.238'
 
     # Define the port on which you want to connect
     port = 12345
@@ -121,12 +120,6 @@ def main():
         frame = camera.read()
         frame = imutils.resize(frame, width = 800)
 
-        # Do the face detection forward
-        blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0), False, False)
-        net.setInput(blob)
-        detections = net.forward()
-        box_posx, box_posy, box_w, box_h, aligned_faces = detect_faces(frame, detections, faceAlignment, confidence)
-
         cv2.imshow("Frame", frame)
         fps.update()
 
@@ -135,7 +128,13 @@ def main():
             break
 
         # For capturing an image, press button c 
-        elif key & 0xFF == ord("c"):            
+        elif key & 0xFF == ord("c"):
+            # Do the face detection forward
+            blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0), False, False)
+            net.setInput(blob)
+            detections = net.forward()
+            box_posx, box_posy, box_w, box_h, aligned_faces = detect_faces(frame, detections, faceAlignment, confidence)
+
             print("Send an image at frame", count_frame)
 
             # Detect faces and their information
