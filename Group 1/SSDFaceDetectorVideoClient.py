@@ -19,10 +19,10 @@ import pickle
 
 
 class ImageData:
-    img_bytestream = 0 # original image bye stream 
+    img_bytestream = 0 # original image bye stream
     aligned_face_bytestream = 0 # aligned faces bytestream array in order from big faces to small faces
-    box_posx = 0 # x-coordinate array of extracting faces from original image 
-    box_posy = 0 # y- coordinate array of extracting faces from original image 
+    box_posx = 0 # x-coordinate array of extracting faces from original image
+    box_posy = 0 # y- coordinate array of extracting faces from original image
     box_w = 0 # width array of extracting faces from original image
     box_h = 0 # height array of extracting faces from original image
 
@@ -46,7 +46,7 @@ def convert_img_to_bytestream(img):
     is_success, im_buf_arr = cv2.imencode(".jpg", img)
     if is_success:
         return im_buf_arr.tobytes()
-    else: 
+    else:
         return None
 
 def detect_faces(image, detections, faceAlignment, confidence):
@@ -76,17 +76,11 @@ def detect_faces(image, detections, faceAlignment, confidence):
             # if the face is too small then skipping it
             if fW < 20 or fH < 20:
                 continue
-            
+
             # extract aligned face, if cannot then keep the original face
             rect = dlib.rectangle(startX, startY, endX, endY)
             faceAligned = faceAlignment.align(image, gray, rect)
             aligned_faces.append(convert_img_to_bytestream(faceAligned))
-
-            # drawing bounding box
-            # text = "{:.2f}%".format(guarantee * 100)
-            # y = startY - 10 if startY - 10 > 10 else startY + 10
-            # cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
-            # cv2.putText(image, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
 
     # Sort lists by face height
     box_posx = sortByOrder(box_posx, box_h)
@@ -113,7 +107,7 @@ def read_frame(camera, writeVideo):
 
     # connect to server on local computer
     # local host IP '127.0.0.1'
-    host = '127.0.0.1'
+    host = '223.195.37.238'
 
     # Define the port on which you want to connect
     port = 12345
@@ -125,7 +119,7 @@ def read_frame(camera, writeVideo):
         box_posy_temp = []
         box_w_temp = []
         box_h_temp = []
-        
+
         (grabbed, frame) = camera.read()
 
         if args.get("video") and not grabbed:
@@ -159,7 +153,7 @@ def read_frame(camera, writeVideo):
         s.connect((host, port))
         s.sendall(data_string)
         s.close()
-        
+
         # if writeVideo:
         #     out.write(frame)
 

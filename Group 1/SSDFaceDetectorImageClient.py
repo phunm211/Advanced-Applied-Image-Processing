@@ -17,10 +17,10 @@ import time
 import argparse
 
 class ImageData:
-    img_bytestream = 0 # original image bye stream 
+    img_bytestream = 0 # original image bye stream
     aligned_face_bytestream = 0 # aligned faces bytestream array in order from big faces to small faces
-    box_posx = 0 # x-coordinate array of extracting faces from original image 
-    box_posy = 0 # y- coordinate array of extracting faces from original image 
+    box_posx = 0 # x-coordinate array of extracting faces from original image
+    box_posy = 0 # y- coordinate array of extracting faces from original image
     box_w = 0 # width array of extracting faces from original image
     box_h = 0 # height array of extracting faces from original image
 
@@ -29,7 +29,7 @@ def convert_img_to_bytestream(img):
     is_success, im_buf_arr = cv2.imencode(".jpg", img)
     if is_success:
         return im_buf_arr.tobytes()
-    else: 
+    else:
         return None
 
 
@@ -69,12 +69,6 @@ def detect_faces(image, detections, faceAlignment, confidence):
             rect = dlib.rectangle(startX, startY, endX, endY)
             faceAligned = faceAlignment.align(image, gray, rect)
             aligned_faces.append(convert_img_to_bytestream(faceAligned))
-
-            # drawing bounding box
-            # text = "{:.2f}%".format(guarantee * 100)
-            # y = startY - 10 if startY - 10 > 10 else startY + 10
-            # cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
-            # cv2.putText(image, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
 
     # Sort lists by face height
     box_posx = sortByOrder(box_posx, box_h)
@@ -127,7 +121,7 @@ def main():
         if key & 0xFF == ord("q"):
             break
 
-        # For capturing an image, press button c 
+        # For capturing an image, press button c
         elif key & 0xFF == ord("c"):
             # Do the face detection forward
             blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0), False, False)
@@ -160,7 +154,7 @@ def main():
             s.close()
 
         count_frame = count_frame + 1
-        
+
 
     fps.stop()
     print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
