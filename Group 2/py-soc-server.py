@@ -1,4 +1,5 @@
-# import socket programming library 
+# import socket programming library
+import numpy as np
 import socket
 import pickle
 import torch
@@ -8,7 +9,8 @@ import json
 from glob import glob
 import io
 from pymongo import MongoClient
-
+#from AGE_recognition.AGE_recognition import predict
+#import cv2
 # import thread module
 from _thread import *
 import threading
@@ -19,7 +21,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 path = 'aligned_faces/test/'
 
 # class names
-class_name = ['Cuong', 'Dat']
+class_name = ['Cuong', 'Dat', 'Eldor', 'Jinhee', 'Joon Huyng', 'Minh', 'Phu', 'Abdullah']
 
 # transforms
 loader = transforms.Compose([
@@ -38,9 +40,8 @@ def image_loader(image_bytestream):
     image = image.unsqueeze(0)
     return image
 
-
 # load model on CPU mode
-model = torch.load('test_model.pth', map_location=lambda storage, loc: storage)
+model = torch.load('final_model.pth', map_location=lambda storage, loc: storage)
 
 
 # paths = 'aligned_faces/test/*.jpg'
@@ -51,19 +52,24 @@ def face_recog(paths):
     model.eval()
     images_so_far = 0
     name_array = []
+    prediction_score = []
     with torch.no_grad():
         for i, inputs in enumerate(paths):
             input = image_loader(inputs)
             # input = input.to(device)
             outputs = model(input)
             _, preds = torch.max(outputs, 1)
+            sm = torch.nn.Softmax()
+            prob = sm(outputs)
+            prob = np.array(torch.topk(prob, k=1))
             # print(preds)
             for j in range(input.size()[0]):
                 # print('Box index: ', images_so_far)
                 # print('predicted: {}'.format(class_name[preds[j].cpu().numpy()]))
                 name_array.append('{}'.format(class_name[preds[j].cpu().numpy()]))
+                prediction_score.append(prob[0] * 100)
                 images_so_far += 1
-    return name_array
+    return name_array, prediction_score
 
 
 class ImageData:
@@ -76,7 +82,7 @@ class ImageData:
 
 
 # For MongoDB
-client = MongoClient('localhost', 27017)
+client = MongoClient('mongodb://223.195.37.85:27017/')
 db = client['machine-learning']
 collection = db['ml-collection']
 
@@ -105,33 +111,44 @@ def threaded(c):
 
     # Step 2: Preprocessing bounding box image
     # Step 3: Get name and other information of bounding box image based on trained model
-    box_labelname = face_recog(box_bytestream)
+    box_info = face_recog(box_bytestream)
+    box_labelname = box_info[0]
+    box_score = box_info[1]
 
     # Step 4: Generate a JSON form and send to Group 3 via HTTP
     image_dict = dict()
-    image_dict["_id"] = collection.count()
+    # image_dict["_id"] = collection.count()
     image_dict["image_bytestream"] = img_bytestream
     annotation_list = []
     for i in range(img_numbox):
         box_dict = dict()
         box_dict["label"] = box_labelname[i]
+        box_dict["score"] = box_score[i]
         bbox = dict()
-        bbox["x"] = box_posx[i]
-        bbox["y"] = box_posy[i]
-        bbox["w"] = box_w[i]
-        bbox["h"] = box_h[i]
+        bbox["x"] = int(box_posx[i])
+        bbox["y"] = int(box_posy[i])
+        bbox["w"] = int(box_w[i])
+        bbox["h"] = int(box_h[i])
         box_dict["bbox"] = bbox
+        # nparr = np.fromstring(box_bytestream[i], np.uint8)
+        # img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         annotation_list.append(box_dict)
+        # annotation_list = predict(img, annotation_list)
     image_dict["annotation"] = annotation_list
+    nparr = np.fromstring(img_bytestream, np.uint8)
+    #img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    #ann = predict(img, image_dict["annotation"])
+
     collection.insert_one(image_dict)
-    # image_json = json.dumps(image_dict, indent=4)
-    # print(image_json)
+
+    #image_json = json.dumps(image_dict, indent=4)
+    print(image_dict)
     c.close()
 
 
 def Main():
-    host = ""
-
+    host = "223.195.37.238"
+    #host = "127.0.0.1"
     # reverse a port on your computer
     # in our case it is 12345 but it
     # can be anything
